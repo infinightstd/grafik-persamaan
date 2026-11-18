@@ -52,15 +52,14 @@ canvas.drag{cursor:grabbing}
     <p class="sub">Masukkan persamaan di bawah ini</p>
     <div class="row">
       <label><span class="dot" style="background:var(--c1)"></span>Persamaan 1</label>
-      <input type="text" id="e1" value="2x + 1y = 5000" spellcheck="false" autocomplete="off">
+      <input type="text" id="e1" value="" placeholder="contoh: 2x + 3y = 12" spellcheck="false" autocomplete="off">
       <div class="err" id="r1"></div>
     </div>
     <div class="row">
       <label><span class="dot" style="background:var(--c2)"></span>Persamaan 2</label>
-      <input type="text" id="e2" value="1x + 2y = 4000" spellcheck="false" autocomplete="off">
+      <input type="text" id="e2" value="" placeholder="contoh: x + 2y = 8" spellcheck="false" autocomplete="off">
       <div class="err" id="r2"></div>
     </div>
-    <div class="info" id="info"></div>
     <div class="btns">
       <button id="fit">Sesuaikan tampilan</button>
       <button id="reset">Reset zoom</button>
@@ -115,7 +114,7 @@ function parseEq(str){
 }
 
 // ---------- Update ----------
-const fmt = n => { if(!isFinite(n)) return '?'; const r=Math.round(n*1e4)/1e4; return r.toLocaleString('id-ID',{maximumFractionDigits:4}); };
+const fmt = n => { if(!isFinite(n)) return '?'; const r=Math.round(n*1e4)/1e4+0; return r.toLocaleString('id-ID',{maximumFractionDigits:4}); };
 function update(fit){
   [1,2].forEach((i)=>{
     const el=document.getElementById('e'+i), er=document.getElementById('r'+i);
@@ -123,19 +122,14 @@ function update(fit){
     catch(e){ lines[i-1]=null; er.textContent=e.message; }
   });
   inter=null;
-  const info=document.getElementById('info');
   const [l1,l2]=lines;
   if(l1&&l2){
     const det=l1.a*l2.b-l2.a*l1.b;
-    if(Math.abs(det)<1e-12){
-      const same=Math.abs(l1.a*l2.c-l2.a*l1.c)<1e-9 && Math.abs(l1.b*l2.c-l2.b*l1.c)<1e-9;
-      info.textContent = same?'Kedua garis berimpit (tak hingga solusi).':'Kedua garis sejajar (tidak ada titik potong).';
-    } else {
+    if(Math.abs(det)>=1e-12){
       const x=(l1.c*l2.b-l2.c*l1.b)/det, y=(l1.a*l2.c-l2.a*l1.c)/det;
       inter={x,y};
-      info.innerHTML='Titik potong:<br><b>A = ('+fmt(x)+', '+fmt(y)+')</b>';
     }
-  } else info.textContent='Masukkan kedua persamaan untuk melihat titik potong.';
+  }
   if(fit) fitView();
   draw();
 }
@@ -147,6 +141,7 @@ function fitView(){
     if(Math.abs(l.a)>1e-12) pts.push([l.c/l.a,0]);
     if(Math.abs(l.b)>1e-12) pts.push([0,l.c/l.b]);
   });
+  if(!lines[0]&&!lines[1]){ view={cx:0,cy:0,scale:Math.min(cv.clientWidth,cv.clientHeight)/20}; return; }
   pts.push([0,0]);
   let xs=pts.map(p=>p[0]), ys=pts.map(p=>p[1]);
   let x0=Math.min(...xs),x1=Math.max(...xs),y0=Math.min(...ys),y1=Math.max(...ys);
@@ -227,7 +222,25 @@ function draw(){
     else { const f=x=>(l.c-l.a*x)/l.b; p1=[0,toY(f(xmin))]; p2=[W,toY(f(xmax))]; }
     ctx.moveTo(p1[0],p1[1]);ctx.lineTo(p2[0],p2[1]);ctx.stroke();
   });
-  // titik potong
+  // titik potong dengan sumbu x dan y
+  ctx.font='bold 12px system-ui,sans-serif';
+  const drawPt=(x,y,col,txt,dx,dy,al,bl)=>{
+    const px=toX(x),py=toY(y);
+    ctx.fillStyle=col;ctx.strokeStyle=css('--cv');ctx.lineWidth=2;
+    ctx.beginPath();ctx.arc(px,py,5,0,7);ctx.fill();ctx.stroke();
+    ctx.textAlign=al;ctx.textBaseline=bl;
+    ctx.lineWidth=4;ctx.strokeText(txt,px+dx,py+dy);
+    ctx.fillText(txt,px+dx,py+dy);
+  };
+  lines.forEach((l,i)=>{
+    if(!l) return;
+    const hasX=Math.abs(l.a)>1e-12, hasY=Math.abs(l.b)>1e-12;
+    const xi=hasX?l.c/l.a:null, yi=hasY?l.c/l.b:null;
+    const both=hasX&&hasY&&Math.abs(xi)<1e-9&&Math.abs(yi)<1e-9;
+    if(hasX) drawPt(xi,0,cols[i],'('+fmt(xi)+', 0)',0,-10,'center','bottom');
+    if(hasY&&!both) drawPt(0,yi,cols[i],'(0, '+fmt(yi)+')',10,-6,'left','bottom');
+  });
+  // titik potong dua garis
   if(inter){
     const px=toX(inter.x),py=toY(inter.y);
     ctx.fillStyle=css('--pt');ctx.strokeStyle='#000';ctx.lineWidth=1;
