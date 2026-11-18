@@ -1,0 +1,278 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Grafik Persamaan Linear</title>
+<style>
+:root{--bg:#f6f7fb;--panel:#fff;--text:#1d2433;--muted:#667085;--border:#d0d5dd;--grid:#e4e7ec;--grid2:#c4c9d4;--axis:#444;--c1:#4f5fc4;--c2:#3fa535;--pt:#e0453a;--cv:#fff;box-sizing:border-box;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]){--bg:#12151c;--panel:#1b1f29;--text:#e8ebf2;--muted:#9aa3b5;--border:#394052;--grid:#2a3040;--grid2:#3d4558;--axis:#aab;--c1:#7d8cff;--c2:#6fd264;--pt:#ff6b5e;--cv:#161a22}}
+*{box-sizing:border-box}
+body{margin:0;background:var(--bg);color:var(--text);font-family:system-ui,-apple-system,"Segoe UI",Roboto,sans-serif}
+.app{display:flex;gap:16px;padding:16px;padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px));min-height:100vh;min-height:100dvh;max-width:1400px;margin:0 auto}
+.panel{background:var(--panel);border:1px solid var(--border);border-radius:12px;padding:16px;width:300px;flex-shrink:0;align-self:flex-start}
+h1{font-size:17px;margin:0 0 4px}
+p.sub{font-size:13px;color:var(--muted);margin:0 0 14px}
+.row{margin-bottom:12px}
+label{display:flex;align-items:center;gap:6px;font-size:13px;font-weight:600;margin-bottom:4px}
+.dot{width:12px;height:12px;border-radius:3px;display:inline-block}
+input[type=text]{width:100%;padding:9px 10px;border:1px solid var(--border);border-radius:8px;font-size:16px;background:var(--bg);color:var(--text);font-family:ui-monospace,Menlo,Consolas,monospace}
+input:focus{outline:2px solid var(--c1);border-color:transparent}
+.err{color:var(--pt);font-size:12px;min-height:16px;margin-top:3px}
+.info{font-size:14px;padding:10px;border-radius:8px;background:var(--bg);border:1px solid var(--border);margin-top:6px;line-height:1.5}
+.btns{display:flex;gap:8px;margin-top:12px;flex-wrap:wrap}
+button{border:1px solid var(--border);background:var(--bg);color:var(--text);padding:10px 14px;border-radius:8px;cursor:pointer;font-size:13px}
+button:hover{border-color:var(--c1)}
+.hint{font-size:12px;color:var(--muted);margin-top:12px;line-height:1.5}
+.stage{flex:1;min-width:0;background:var(--cv);border:1px solid var(--border);border-radius:12px;overflow:hidden;position:relative;height:calc(100vh - 32px);height:calc(100dvh - 32px);min-height:260px;touch-action:none}
+.toggle{position:absolute;top:8px;left:8px;width:42px;height:42px;padding:0;font-size:18px;background:var(--panel);z-index:2;opacity:.9}
+.panel.hide{display:none}
+canvas{width:100%;height:100%;display:block;cursor:grab}
+canvas.drag{cursor:grabbing}
+@media(max-width:760px) and (orientation:portrait){.app{flex-direction:column}.panel{width:100%}.stage{height:70vh;flex:none}}
+/* HP posisi horizontal (landscape): panel di kiri, grafik memenuhi sisanya */
+@media(orientation:landscape) and (max-height:560px){
+  .app{flex-direction:row;gap:8px;padding-top:8px;padding-bottom:8px;padding-left:max(8px,env(safe-area-inset-left,0px));padding-right:max(8px,env(safe-area-inset-right,0px));height:100vh;height:100dvh;min-height:0}
+  .panel{width:250px;padding:12px;max-height:calc(100dvh - 16px);overflow-y:auto;-webkit-overflow-scrolling:touch}
+  h1{font-size:15px}
+  p.sub{margin-bottom:8px}
+  .row{margin-bottom:6px}
+  .err{min-height:0}
+  .info{font-size:13px;padding:8px}
+  .btns{margin-top:8px}
+  .hint{display:none}
+  .stage{height:calc(100dvh - 16px);min-height:0}
+}
+</style>
+</head>
+<body>
+<div class="app">
+  <div class="panel">
+    <h1>Grafik Persamaan Linear</h1>
+    <p class="sub">Masukkan persamaan di bawah ini</p>
+    <div class="row">
+      <label><span class="dot" style="background:var(--c1)"></span>Persamaan 1</label>
+      <input type="text" id="e1" value="2x + 1y = 5000" spellcheck="false" autocomplete="off">
+      <div class="err" id="r1"></div>
+    </div>
+    <div class="row">
+      <label><span class="dot" style="background:var(--c2)"></span>Persamaan 2</label>
+      <input type="text" id="e2" value="1x + 2y = 4000" spellcheck="false" autocomplete="off">
+      <div class="err" id="r2"></div>
+    </div>
+    <div class="info" id="info"></div>
+    <div class="btns">
+      <button id="fit">Sesuaikan tampilan</button>
+      <button id="reset">Reset zoom</button>
+    </div>
+    <div class="hint">Contoh format: <code>2x + 3y = 12</code>, <code>y = 2x - 1</code>, <code>x = 4</code>, <code>y = 0,5x + 2</code>.<br>Geser grafik dengan mouse/jari, zoom dengan scroll atau cubit.</div>
+  </div>
+  <div class="stage"><canvas id="cv"></canvas><button id="tg" class="toggle" aria-label="Tampilkan atau sembunyikan panel">☰</button></div>
+</div>
+
+<script>
+const cv = document.getElementById('cv'), ctx = cv.getContext('2d');
+const css = n => getComputedStyle(document.documentElement).getPropertyValue(n).trim();
+let view = {cx:2000, cy:1000, scale:0.1}; // scale = px per unit
+let lines = [null, null];
+let inter = null;
+
+// ---------- Parser: bentuk ax + by = c ----------
+function parseSide(s){
+  s = s.replace(/\s+/g,'').replace(/,/g,'.').replace(/−/g,'-').replace(/×|\*/g,'');
+  if(!s) throw 0;
+  let a=0,b=0,c=0;
+  const re = /([+-]?)(\d*\.?\d*(?:\/\d+\.?\d*)?)([xy]?)/g;
+  let m, pos=0, any=false;
+  while(pos < s.length){
+    re.lastIndex = pos;
+    m = re.exec(s);
+    if(!m || m.index!==pos || m[0]==='') throw 0;
+    pos += m[0].length;
+    const sign = m[1]==='-'?-1:1;
+    let num = m[2], v;
+    if(num===''){ if(!m[3]) throw 0; v=1; }
+    else if(num.includes('/')){ const [p,q]=num.split('/'); v=parseFloat(p)/parseFloat(q); }
+    else v=parseFloat(num);
+    if(isNaN(v)) throw 0;
+    v*=sign; any=true;
+    if(m[3]==='x') a+=v; else if(m[3]==='y') b+=v; else c+=v;
+  }
+  if(!any) throw 0;
+  return {a,b,c};
+}
+function parseEq(str){
+  str = str.trim().toLowerCase();
+  if(!str) return {empty:true};
+  const parts = str.split('=');
+  if(parts.length!==2) throw new Error('Gunakan tepat satu tanda "="');
+  let L, R;
+  try{ L=parseSide(parts[0]); R=parseSide(parts[1]); }
+  catch(e){ throw new Error('Format tidak dikenali. Contoh: 2x + 3y = 12'); }
+  const a=L.a-R.a, b=L.b-R.b, c=R.c-L.c;
+  if(Math.abs(a)<1e-12 && Math.abs(b)<1e-12) throw new Error('Persamaan harus memuat x atau y');
+  return {a,b,c};
+}
+
+// ---------- Update ----------
+const fmt = n => { if(!isFinite(n)) return '?'; const r=Math.round(n*1e4)/1e4; return r.toLocaleString('id-ID',{maximumFractionDigits:4}); };
+function update(fit){
+  [1,2].forEach((i)=>{
+    const el=document.getElementById('e'+i), er=document.getElementById('r'+i);
+    try{ const p=parseEq(el.value); lines[i-1]=p.empty?null:p; er.textContent=''; }
+    catch(e){ lines[i-1]=null; er.textContent=e.message; }
+  });
+  inter=null;
+  const info=document.getElementById('info');
+  const [l1,l2]=lines;
+  if(l1&&l2){
+    const det=l1.a*l2.b-l2.a*l1.b;
+    if(Math.abs(det)<1e-12){
+      const same=Math.abs(l1.a*l2.c-l2.a*l1.c)<1e-9 && Math.abs(l1.b*l2.c-l2.b*l1.c)<1e-9;
+      info.textContent = same?'Kedua garis berimpit (tak hingga solusi).':'Kedua garis sejajar (tidak ada titik potong).';
+    } else {
+      const x=(l1.c*l2.b-l2.c*l1.b)/det, y=(l1.a*l2.c-l2.a*l1.c)/det;
+      inter={x,y};
+      info.innerHTML='Titik potong:<br><b>A = ('+fmt(x)+', '+fmt(y)+')</b>';
+    }
+  } else info.textContent='Masukkan kedua persamaan untuk melihat titik potong.';
+  if(fit) fitView();
+  draw();
+}
+
+function fitView(){
+  const pts=[];
+  if(inter) pts.push([inter.x,inter.y]);
+  lines.forEach(l=>{ if(!l) return;
+    if(Math.abs(l.a)>1e-12) pts.push([l.c/l.a,0]);
+    if(Math.abs(l.b)>1e-12) pts.push([0,l.c/l.b]);
+  });
+  pts.push([0,0]);
+  let xs=pts.map(p=>p[0]), ys=pts.map(p=>p[1]);
+  let x0=Math.min(...xs),x1=Math.max(...xs),y0=Math.min(...ys),y1=Math.max(...ys);
+  let w=x1-x0||2, h=y1-y0||2;
+  const W=cv.clientWidth,H=cv.clientHeight;
+  const s=Math.min(W/(w*1.8),H/(h*1.8));
+  view={cx:(x0+x1)/2,cy:(y0+y1)/2,scale:s};
+}
+
+// ---------- Gambar ----------
+function resize(){
+  const d=window.devicePixelRatio||1;
+  cv.width=cv.clientWidth*d; cv.height=cv.clientHeight*d;
+  ctx.setTransform(d,0,0,d,0,0);
+  draw();
+}
+const toX=x=>cv.clientWidth/2+(x-view.cx)*view.scale;
+const toY=y=>cv.clientHeight/2-(y-view.cy)*view.scale;
+const fromX=px=>(px-cv.clientWidth/2)/view.scale+view.cx;
+const fromY=py=>-(py-cv.clientHeight/2)/view.scale+view.cy;
+
+function niceStep(target){
+  const p=Math.pow(10,Math.floor(Math.log10(target))), f=target/p;
+  return (f<1.5?1:f<3.5?2:f<7.5?5:10)*p;
+}
+
+function draw(){
+  const W=cv.clientWidth,H=cv.clientHeight;
+  ctx.clearRect(0,0,W,H);
+  const step=niceStep(70/view.scale), minor=step/5;
+  const xmin=fromX(0),xmax=fromX(W),ymax=fromY(0),ymin=fromY(H);
+  // grid minor
+  ctx.lineWidth=1;
+  ctx.strokeStyle=css('--grid');
+  ctx.beginPath();
+  for(let x=Math.ceil(xmin/minor)*minor;x<=xmax;x+=minor){const px=Math.round(toX(x))+.5;ctx.moveTo(px,0);ctx.lineTo(px,H);}
+  for(let y=Math.ceil(ymin/minor)*minor;y<=ymax;y+=minor){const py=Math.round(toY(y))+.5;ctx.moveTo(0,py);ctx.lineTo(W,py);}
+  ctx.stroke();
+  // grid major
+  ctx.strokeStyle=css('--grid2');
+  ctx.beginPath();
+  for(let x=Math.ceil(xmin/step)*step;x<=xmax;x+=step){const px=Math.round(toX(x))+.5;ctx.moveTo(px,0);ctx.lineTo(px,H);}
+  for(let y=Math.ceil(ymin/step)*step;y<=ymax;y+=step){const py=Math.round(toY(y))+.5;ctx.moveTo(0,py);ctx.lineTo(W,py);}
+  ctx.stroke();
+  // sumbu
+  const ax=toX(0),ay=toY(0);
+  ctx.strokeStyle=css('--axis');ctx.lineWidth=1.5;ctx.beginPath();
+  if(ax>=0&&ax<=W){ctx.moveTo(ax,0);ctx.lineTo(ax,H);}
+  if(ay>=0&&ay<=H){ctx.moveTo(0,ay);ctx.lineTo(W,ay);}
+  ctx.stroke();
+  // label
+  ctx.fillStyle=css('--muted');ctx.font='11px system-ui,sans-serif';
+  const lx=Math.min(Math.max(ay,14),H-6);
+  ctx.textAlign='center';ctx.textBaseline='top';
+  const yl=Math.min(Math.max(ay+4,2),H-16);
+  for(let x=Math.ceil(xmin/step)*step;x<=xmax;x+=step){
+    if(Math.abs(x)<step/1e3) continue;
+    ctx.fillText(fmt(x),toX(x),yl);
+  }
+  const xl=Math.min(Math.max(ax-5,40),W-4);
+  ctx.textAlign='right';ctx.textBaseline='middle';
+  const onLeft=ax-5>=40;
+  if(!onLeft) ctx.textAlign='left';
+  for(let y=Math.ceil(ymin/step)*step;y<=ymax;y+=step){
+    if(Math.abs(y)<step/1e3) continue;
+    ctx.fillText(fmt(y),onLeft?xl:Math.max(ax+5,4),toY(y));
+  }
+  ctx.textAlign='right';ctx.textBaseline='top';
+  if(ax>=0&&ax<=W&&ay>=0&&ay<=H) ctx.fillText('0',ax-5,ay+4);
+
+  // garis
+  const cols=[css('--c1'),css('--c2')];
+  lines.forEach((l,i)=>{
+    if(!l) return;
+    ctx.strokeStyle=cols[i];ctx.lineWidth=2.5;ctx.beginPath();
+    let p1,p2;
+    if(Math.abs(l.b)<1e-12){ const x=l.c/l.a; p1=[toX(x),0]; p2=[toX(x),H]; }
+    else { const f=x=>(l.c-l.a*x)/l.b; p1=[0,toY(f(xmin))]; p2=[W,toY(f(xmax))]; }
+    ctx.moveTo(p1[0],p1[1]);ctx.lineTo(p2[0],p2[1]);ctx.stroke();
+  });
+  // titik potong
+  if(inter){
+    const px=toX(inter.x),py=toY(inter.y);
+    ctx.fillStyle=css('--pt');ctx.strokeStyle='#000';ctx.lineWidth=1;
+    ctx.beginPath();ctx.arc(px,py,5,0,7);ctx.fill();ctx.stroke();
+    ctx.font='bold 13px system-ui,sans-serif';ctx.textAlign='left';ctx.textBaseline='bottom';
+    const t='A = ('+fmt(inter.x)+', '+fmt(inter.y)+')';
+    ctx.lineWidth=4;ctx.strokeStyle=css('--cv');ctx.strokeText(t,px+8,py-6);
+    ctx.fillStyle=css('--pt');ctx.fillText(t,px+8,py-6);
+  }
+}
+
+// ---------- Interaksi ----------
+const pointers=new Map();let lastDist=0;
+cv.addEventListener('pointerdown',e=>{cv.setPointerCapture(e.pointerId);pointers.set(e.pointerId,{x:e.offsetX,y:e.offsetY});cv.classList.add('drag');lastDist=0;});
+cv.addEventListener('pointermove',e=>{
+  if(!pointers.has(e.pointerId)) return;
+  const prev=pointers.get(e.pointerId);
+  pointers.set(e.pointerId,{x:e.offsetX,y:e.offsetY});
+  if(pointers.size===1){
+    view.cx-=(e.offsetX-prev.x)/view.scale; view.cy+=(e.offsetY-prev.y)/view.scale; draw();
+  } else if(pointers.size===2){
+    const [a,b]=[...pointers.values()];
+    const d=Math.hypot(a.x-b.x,a.y-b.y);
+    if(lastDist){ zoomAt((a.x+b.x)/2,(a.y+b.y)/2,d/lastDist); }
+    lastDist=d;
+  }
+});
+const up=e=>{pointers.delete(e.pointerId);lastDist=0;if(!pointers.size)cv.classList.remove('drag');};
+cv.addEventListener('pointerup',up);cv.addEventListener('pointercancel',up);
+function zoomAt(px,py,k){
+  const wx=fromX(px),wy=fromY(py);
+  view.scale=Math.min(Math.max(view.scale*k,1e-6),1e6);
+  view.cx=wx-(px-cv.clientWidth/2)/view.scale;
+  view.cy=wy+(py-cv.clientHeight/2)/view.scale;
+  draw();
+}
+cv.addEventListener('wheel',e=>{e.preventDefault();zoomAt(e.offsetX,e.offsetY,Math.exp(-e.deltaY*0.0015));},{passive:false});
+
+document.getElementById('e1').addEventListener('input',()=>update(true));
+document.getElementById('e2').addEventListener('input',()=>update(true));
+document.getElementById('fit').onclick=()=>{fitView();draw();};
+document.getElementById('reset').onclick=()=>{view={cx:0,cy:0,scale:30};draw();};
+document.getElementById('tg').onclick=()=>{document.querySelector('.panel').classList.toggle('hide');};
+new ResizeObserver(resize).observe(cv.parentElement);
+resize();update(true);
+</script>
+</body>
+</html>
