@@ -49,21 +49,21 @@ canvas.drag{cursor:grabbing}
 <div class="app">
   <div class="panel">
     <h1>Grafik Persamaan Linear</h1>
-    <p class="sub">Masukkan persamaan di bawah ini</p>
+    <p class="sub">Masukkan persamaan pada kolom input yang tersedia!</p>
     <div class="row">
       <label><span class="dot" style="background:var(--c1)"></span>Persamaan 1</label>
-      <input type="text" id="e1" value="" placeholder="contoh: 2x + 3y = 12" spellcheck="false" autocomplete="off">
+      <input type="text" id="e1" value="" placeholder="contoh: 2x+3y=12" spellcheck="false" autocomplete="off">
       <div class="err" id="r1"></div>
     </div>
     <div class="row">
       <label><span class="dot" style="background:var(--c2)"></span>Persamaan 2</label>
-      <input type="text" id="e2" value="" placeholder="contoh: x + 2y = 8" spellcheck="false" autocomplete="off">
+      <input type="text" id="e2" value="" placeholder="contoh: x+2y=8" spellcheck="false" autocomplete="off">
       <div class="err" id="r2"></div>
     </div>
     <div class="btns">
       <button id="fit">Sesuaikan tampilan</button>
     </div>
-    <div class="hint">Contoh format: <code>2x + 3y = 12</code>, <code>y = 2x - 1</code>, <code>x = 4</code>, <code>y = 0,5x + 2</code>.<br>Geser grafik dengan mouse/jari, zoom dengan scroll atau cubit.</div>
+    <div class="hint">Keterangan:<br>Geser grafik dengan mouse/jari, zoom dengan scroll atau cubit.</div>
   </div>
   <div class="stage"><canvas id="cv"></canvas><button id="tg" class="toggle" aria-label="Tampilkan atau sembunyikan panel">☰</button></div>
 </div>
@@ -106,7 +106,7 @@ function parseEq(str){
   if(parts.length!==2) throw new Error('Gunakan tepat satu tanda "="');
   let L, R;
   try{ L=parseSide(parts[0]); R=parseSide(parts[1]); }
-  catch(e){ throw new Error('Format tidak dikenali. Contoh: 2x + 3y = 12'); }
+  catch(e){ throw new Error('Format tidak dikenali. Contoh: 2x+3y=12'); }
   const a=L.a-R.a, b=L.b-R.b, c=R.c-L.c;
   if(Math.abs(a)<1e-12 && Math.abs(b)<1e-12) throw new Error('Persamaan harus memuat x atau y');
   return {a,b,c};
